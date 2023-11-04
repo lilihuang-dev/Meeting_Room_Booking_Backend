@@ -29,7 +29,8 @@ bookings.get("/:id", async (req, res) => {
     const { id } = req.params;
     try {
         const singleBooking = await getBookingById(id);
-        
+        console.log(singleBooking.start_date)
+        console.log(singleBooking.end_date)
         if (singleBooking.booking_id) {
             res.json({ success: true, result: singleBooking });
         } else {

@@ -16,8 +16,23 @@ const getAllBookingsByRoomId = async (roomId) => {
 const getAllBookings = async () => {
     try {
         const currentDate = new Date().toISOString();
-        const allBookings = await db.any('SELECT * FROM booking WHERE "start_date" > $1', [currentDate]);
-        return allBookings;
+        const allBookings = await db.any(
+            `SELECT b.booking_id, 
+                    b.meeting_name,
+                    b.start_date, 
+                    b.end_date, 
+                    r.room_name AS booking_room_name, 
+                    r.floor AS booking_room_floor 
+            FROM booking AS b 
+            JOIN meeting_room AS r 
+            ON b.room_id = r.room_id  
+            WHERE b.start_date > $1
+            `,
+            [currentDate]
+            );
+      return allBookings;
+        // const allBookings = await db.any('SELECT * FROM booking WHERE "start_date" > $1', [currentDate]);
+        // return allBookings;
     } catch (error) {
         return error;
     }

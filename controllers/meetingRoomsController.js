@@ -4,12 +4,14 @@ const rooms = express.Router();
 const {
     getAllMeetingRooms,
     createAMeetingRoom,
-    getOneMeetingRoom 
+    getOneMeetingRoom,
+    getAvailableMeetingRooms 
 } = require("../queries/meetingRooms")
 
-const { getAllBookingsByRoomId } = require("../queries/bookings")
+const { getAllBookingsByRoomId } = require("../queries/bookings");
 
-// Define the GET endpoint  ✔
+
+// Define the GET endpoint to retrieve all meeting rooms ✔
 rooms.get("/", async (req, res) => {
     try {
         const allRooms = await getAllMeetingRooms(); 
@@ -23,7 +25,33 @@ rooms.get("/", async (req, res) => {
     }
 });
 
-// Define the POST endpoint  ✔
+// Define the GET endpoint to retrieve all available meeting rooms
+rooms.get("/available", async (req, res) => {
+    try {
+      const { start_date, end_date, floor, capacity } = req.query; // Use req.query to retrieve query parameters
+  
+      // Check if both start_date and end_date are provided, otherwise send an error
+      if (!start_date || !end_date) {
+        return res.status(400).json({ error: "start_date and end_date are required." });
+      }
+  
+      // Retrieve available rooms by search criteria
+      const availableMeetingRooms = await getAvailableMeetingRooms(start_date, end_date, floor, capacity);
+      console.log("all available rooms: ", availableMeetingRooms)
+      // Check if any available meeting rooms exist, and if they do, send the data back
+      if (availableMeetingRooms.length > 0) {
+        res.status(200).json(availableMeetingRooms);
+      } else {
+        res.status(404).json({ error: "No available meeting rooms match the criteria." });
+      }
+    } catch (error) {
+      console.error(error);
+      res.status(500).json({ error: "An error occurred while retrieving available meeting rooms." });
+    }
+  });
+  
+
+// Define the POST endpoint to create a new room ✔
 rooms.post("/", async (req, res) => {
     try {
         const newRoom = await createAMeetingRoom(req.body);
@@ -46,13 +74,13 @@ rooms.post("/", async (req, res) => {
     }
 });
 
-// Define the GET endpoint  ✔
+// Define the GET endpoint to retrieve a specific meeting room ✔
 rooms.get("/:id", async (req, res) => {
     const { id } = req.params;
     try {
         const singleRoom = await getOneMeetingRoom(id);
-    
         if (singleRoom.room_id) { 
+            console.log(id)
             res.json({ success: true, result: singleRoom });
         } else {
             res.status(404).json({ success: false, error: "Meeting room not found." });
@@ -62,7 +90,7 @@ rooms.get("/:id", async (req, res) => {
     }
 });
 
-// Define the GET endpoint ✔
+// Define the GET endpoint to retrieve all future bookings by a specific meeting room ID ✔
 rooms.get("/:id/bookings", async (req, res) => {
     const { id } = req.params;
     try {

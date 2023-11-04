@@ -51,11 +51,34 @@ const getRoomByBookingId = async (bookingId) => {
     }
   };
   
-  
+  const getAvailableMeetingRooms = async (startDate, endDate, floor, capacity) => {
+    try {
+        const availableRooms = await db.any(
+            `
+            SELECT *
+            FROM meeting_room r
+            LEFT JOIN booking b ON r.room_id = b.room_id
+            WHERE r.available = 0
+            ${
+                startDate && endDate ? 'AND (b.booking_id IS NULL OR NOT (b.start_date < $1 AND b.end_date > $2))' : ''
+            }
+            ${capacity ? 'AND r.capacity >= $3' : ''}
+            ${floor ? 'AND r.floor = $4' : ''}
+            `,
+            [startDate, endDate, capacity, floor]
+        );
+        
+        return availableRooms;
+    } catch (error) {
+        return error;
+    }
+};
+
 
 module.exports = {
     getAllMeetingRooms,
     createAMeetingRoom,
     getOneMeetingRoom,
-    getRoomByBookingId
+    getRoomByBookingId,
+    getAvailableMeetingRooms
 };
