@@ -77,16 +77,14 @@ bookings.get("/:id/room", async (req, res) => {
   });
   
 
-// Define the POST endpoint to create a booking for a specific room XXXX ?
+// Define the POST endpoint to create a booking for a specific room
 bookings.post("/", async (req, res) => {
     try {
-        const roomId = req.body.room_id; 
-        const booking = req.body;
-        if (!roomId || !booking.start_date || !booking.end_date || !booking.meeting_name) {
+        const { room_id, start_date, end_date, meeting_name } = req.body;
+        if (!room_id || !start_date || !end_date || !meeting_name) {
             res.status(400).json({ success: false, error: "All required fields must be provided." });
-            return;
         }
-        const newBookingId = await createABookingForAMeetingRoom(roomId, booking);
+        const newBookingId = await createABookingForAMeetingRoom(room_id, req.body);
     
         if (newBookingId) { 
             res.status(201).json({ success: true, result: newBookingId });
@@ -98,7 +96,7 @@ bookings.post("/", async (req, res) => {
     }
 });    
 
-// Define the DELETE endpoint delete/cancel a booking ( not tested yet )
+// Define the DELETE endpoint delete/cancel a booking 
 bookings.delete("/:id", async (req, res) => {
     const { id } = req.params;
     try {

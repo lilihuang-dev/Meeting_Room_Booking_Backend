@@ -31,52 +31,35 @@ const getBookingById = async (bookingId) => {
         return error;
     }
 };
-    // XXXXXX ?
+   
 const createABookingForAMeetingRoom = async (roomId, booking) => {
-
     try {
-    const isBookingDataValidated = validateBookingData(booking);
-    const isRoomUnAvailable = await db.oneOrNone(
-        "SELECT * FROM booking WHERE room_id = $1 AND (($3 < end_date AND start_date < $3) OR ($2 < end_date AND start_date < $2)) ",
-        [roomId, booking.end_date, booking.start_date]
+        const isBookingDataValidated = validateBookingData(booking);
+        if (!isBookingDataValidated) {
+            throw new Error("Invalid booking data. Please check the provided data.");
+        }
+
+        // Check for conflicting bookings
+        const conflictingBooking = await db.oneOrNone(
+            "SELECT * FROM booking WHERE room_id = $1 AND (start_date, end_date) OVERLAPS ($2, $3)",
+            [roomId, booking.start_date, booking.end_date]
         );
-    if (!isBookingDataValidated) {
-        return new Error("Invalid booking data. Please check the provided data.");
-    }
 
-    if (isRoomUnAvailable) {
-        return new Error("The room is not available during the specified time.");
-    }
+        if (conflictingBooking) {
+            throw new Error("The room is not available during the specified time.");
+        }
 
-// If room is available, proceed to create the booking
-if (isRoomUnAvailable) {
-    throw new Error("The room is not available during the specified time.");
-  }
+        const newBooking = await db.one(
+            "INSERT INTO booking(room_id, meeting_name, start_date, end_date) VALUES($1, $2, $3, $4) RETURNING *",
+            [roomId, booking.meeting_name, booking.start_date, booking.end_date]
+        );
 
-  // Start a transaction
-  return await db.tx(async (t) => {
-    // Insert the booking record and retrieve the booking_id
-    const newBooking = await t.one(
-      "INSERT INTO booking(room_id, meeting_name, start_date, end_date) VALUES($1, $2, $3, $4) RETURNING booking_id",
-      [roomId, booking.meeting_name, booking.start_date, booking.end_date]
-    );
-    const bookingId = newBooking.booking_id;
-
-    // Insert each attendee record associated with the booking
-    if (attendees) {
-      await t.oneOrNone(
-        "INSERT INTO attendee(booking_id, email) VALUES($1, $2)",
-        [bookingId, attendees]
-      );
-    }
-
-    // Commit the transaction
-    return bookingId;
-  });
+        return newBooking;
     } catch (error) {
         return error;
     }
 };
+
 
 const deleteABookingById = async (bookingId) => {
     try {

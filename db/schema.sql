@@ -25,6 +25,6 @@ CREATE TABLE booking (
 CREATE TABLE attendee (
   attendee_id SERIAL PRIMARY KEY,
   booking_id INTEGER REFERENCES booking(booking_id),
-  name VARCHAR(100) NOT NULL,
+  name VARCHAR(100) DEFAULT NULL,
   email VARCHAR(100) NOT NULL
 );

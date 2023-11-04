@@ -71,9 +71,9 @@ rooms.get("/:id/bookings", async (req, res) => {
         if (allRoomBookings[0]) { 
             res.json({ success: true, result: allRoomBookings });
         } else {
-            res.status(404).json({
-                success: false,
-                error: "No future bookings found for this room. Please consider booking this room for your upcoming events."
+            res.json({
+                success: true,
+                message: "No future bookings found for this room. You can book this room for your upcoming events."
             });
         }
     } catch (error) {
