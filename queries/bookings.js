@@ -59,7 +59,7 @@ const createABookingForAMeetingRoom = async (roomId, booking) => {
             "SELECT * FROM booking WHERE room_id = $1 AND (start_date, end_date) OVERLAPS ($2, $3)",
             [roomId, booking.start_date, booking.end_date]
         );
-
+            console.log("conflictingBooking or not on backend ",  conflictingBooking )
         if (conflictingBooking) {
             throw new Error("The room is not available during the specified time.");
         }
@@ -68,6 +68,7 @@ const createABookingForAMeetingRoom = async (roomId, booking) => {
             "INSERT INTO booking(room_id, meeting_name, start_date, end_date) VALUES($1, $2, $3, $4) RETURNING *",
             [roomId, booking.meeting_name, booking.start_date, booking.end_date]
         );
+        console.log("NEW BOOKING FOR A ROOM :", newBooking)
 
         return newBooking;
     } catch (error) {
